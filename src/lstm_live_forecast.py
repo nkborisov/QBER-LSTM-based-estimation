@@ -5,12 +5,13 @@ import matplotlib.pyplot as plt
 from pandas import read_csv
 from ema import ExponentionalAverager
 import time
+
+
 scaler = MinMaxScaler(feature_range=(0, 1))
 
 
 def predict_seq(test_row, model):
     test_row = np.array(test_row)
-    #test_row = np.reshape(test_row, (1, -1))
     test_row = scaler.transform(test_row)
     test_row = np.reshape(test_row, (1, 4, -1))
     predict_res = model.predict(test_row)
@@ -24,7 +25,7 @@ def shift(seq, n):
 
 
 def main():
-    pulses_stats_file_path = "/home/galactic/profiling/stats/fr_gains.csv"
+    pulses_stats_file_path = "../dataset/fr_gains.csv"
     df_whole = read_csv(pulses_stats_file_path, usecols=[0, 1, 2, 3, 4, 5, 6], engine='python')
     df = read_csv(pulses_stats_file_path, usecols=[0, 1, 2, 3, 4, 5, 6], engine='python',
                   skiprows=160000, nrows=1000)
@@ -55,14 +56,13 @@ def main():
     real_qber_list = list()
     predict_qber_list = list()
     est_qber_list = list()
-    model = load_lstm_model("tr_model/model.json", "tr_model/model.h5")
+    model = load_lstm_model("../tr_model/model.json", "../tr_model/model.h5")
     i = 0
     avg_delay = 0
     buf = list()
     for test_row, real_res in zip(df_conv, df_conv[1:] + [df_conv[0]]):
         ema_val = ema_list[i]
         est_val = real_res[3]
-        #test_row[0] = ema_val #(ema_val + est_val) / 2.
         if len(buf) == 0:
             buf.append(test_row)
             buf.append(test_row)
@@ -76,17 +76,13 @@ def main():
         start_ts = time.time()
         predict_res = predict_seq(buf, model)
         avg_delay += time.time() - start_ts
-        # print(predict_res)
         deltas_est.append(abs(est_val - real_qber))
         deltas_predict.append(abs(real_qber - predict_res[0]))
         predict_qber_list.append(predict_res[0])
         real_qber_list.append(real_qber)
         est_qber_list.append(est_val)
         deltas_ema.append(abs(real_qber - ema_val))
-        # print(deltas)
     avg_delay /= (i + 1)
-    #plt.rc('text', usetex=True)
-    #plt.rc('font', family='serif')
     plt.rcParams.update({'font.size': 22})
     sample_indices = [x for x in range(0, len(deltas_predict))]
     plt.plot(sample_indices, deltas_est, 'r', label=r'$\delta_{predict}$')
@@ -104,6 +100,7 @@ def main():
     print("mean predict score = {}".format(np.mean(deltas_predict)))
     print("mean ema score = {}".format(np.mean(deltas_ema)))
     print("avg delay = {}ms".format(avg_delay * 1000))
+
 
 if __name__ == '__main__':
     main()

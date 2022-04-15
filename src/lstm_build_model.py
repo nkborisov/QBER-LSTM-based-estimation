@@ -69,13 +69,13 @@ def learn(trainX, trainY, look_back, n_features):
     # Plot training
     # evaluate the model
     scores = model.evaluate(trainX, trainY, verbose=2)
-    # print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+    print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
     # serialize model to  JSON
     model_json = model.to_json()
-    with open("tr_model/model.json", "w") as json_file:
+    with open("../tr_model/model.json", "w") as json_file:
         json_file.write(model_json)
     # serialize weights to HDF5
-    model.save_weights("tr_model/model.h5")
+    model.save_weights("../tr_model/model.h5")
     # print("Saved model to disk")
     plot_loss(history)
     return model
@@ -89,7 +89,7 @@ def main():
 
     numpy.random.seed(fixed_seed)
     # load the dataset
-    pulses_stats_file_path = "/home/galactic/profiling/stats/fr_gains.csv"
+    pulses_stats_file_path = "../dataset/fr_gains.csv"
     dataframe = read_csv(pulses_stats_file_path, usecols=[0, 1, 2, 3, 4, 5, 6], engine='python')
     dataset = dataframe.values
     dataset = dataset.astype('float32')
@@ -108,7 +108,7 @@ def main():
     trainX = numpy.reshape(trainX, (trainX.shape[0], look_back, n_features))
     testX = numpy.reshape(testX, (testX.shape[0], look_back, n_features))
     # make predictions
-    model = load_lstm_model("tr_model/model.json", "tr_model/model.h5") #
+    model = load_lstm_model("../tr_model/model.json", "../tr_model/model.h5") #
     trainPredict = model.predict(trainX)
     testPredict = model.predict(testX)
 
